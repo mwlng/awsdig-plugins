@@ -8,7 +8,7 @@ import (
    "path/filepath"
    "plugin"
 
-  "github.com/aws/aws-sdk-go/aws/session"
+   "github.com/aws/aws-sdk-go/aws/session"
 
    "github.com/c-bata/go-prompt"
 )
@@ -18,9 +18,9 @@ var pluginsGlob []string = []string{"*.so", "*.plugin"}
 type ServicePlugin interface {
      Initialize(sess *session.Session) 
      IsResourcePath(path *string) bool
-     GetResourcePrefixSuggestions(resourcePrefixPath string) *[]prompt.Suggest
-     GetResourceSuggestions(resourcePath string) *[]prompt.Suggest
-     GetResourceDetails(resourcePath string, resourceName string) interface{}
+     GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest
+     GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest
+     GetResourceDetails(resourcePath *string, resourceName *string) interface{}
 }
 
 type PluginsManager struct {
@@ -142,7 +142,7 @@ func (pm *PluginsManager) IsResourcePath(service *string,
 func (pm *PluginsManager) GetResourcePrefixSuggestions(service string, 
                                                        resourcePath string) *[]prompt.Suggest {
     if plugin, ok := pm.pluginsMap[service]; ok {
-        return plugin.GetResourcePrefixSuggestions(resourcePath)
+        return plugin.GetResourcePrefixSuggestions(&resourcePath)
     }
     return &[]prompt.Suggest{}
 } 
@@ -150,7 +150,7 @@ func (pm *PluginsManager) GetResourcePrefixSuggestions(service string,
 func (pm *PluginsManager) GetResourceSuggestions(service string, 
                                                  resourcePath string) *[]prompt.Suggest {
     if plugin, ok := pm.pluginsMap[service]; ok {
-        return plugin.GetResourceSuggestions(resourcePath)
+        return plugin.GetResourceSuggestions(&resourcePath)
     }
     return &[]prompt.Suggest{} 
 }
@@ -159,7 +159,7 @@ func (pm *PluginsManager) GetResourceDetails(service string,
                                            resourcePath string, 
                                            resourceName string) interface{} {
     if plugin, ok := pm.pluginsMap[service]; ok {
-        return plugin.GetResourceDetails(resourcePath, resourceName)
+        return plugin.GetResourceDetails(&resourcePath, &resourceName)
     }
     return nil    
 }

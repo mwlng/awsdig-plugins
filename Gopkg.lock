@@ -102,11 +102,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7a2fda2f6d8522b6edb217cf161c15bd94db7ffef7312e008714f4c51f3f49f6"
+  digest = "1:8c6017b502a1558ccd07ca4bd0a50792bc4913d1c8a7d9935543ead6bf028ca1"
   name = "github.com/mwlng/aws-go-clients"
   packages = ["clients"]
   pruneopts = "UT"
-  revision = "bae86349646963f4df38bace325188a1f5b2c051"
+  revision = "0da63935358bd0f9a74b4900eb09fb22c0aff182"
 
 [[projects]]
   branch = "master"

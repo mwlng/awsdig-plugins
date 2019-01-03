@@ -10,7 +10,7 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig/plugins"
+    "awsdig-plugins"
 )
 
 var Service EMRService = EMRService{ client: nil }
@@ -63,14 +63,14 @@ func (s *EMRService) fetchResourceList(path string) {
     return
 }
 
-func (s *EMRService) GetResourcePrefixSuggestions(resourcePrefixPath string) *[]prompt.Suggest {
-    suggestions := resourcePrefixSuggestionsMap[resourcePrefixPath]
+func (s *EMRService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
+    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
     return &suggestions
 }
 
-func (s *EMRService) GetResourceSuggestions(resourcePath string) *[]prompt.Suggest {
-    go s.fetchResourceList(resourcePath)
-    x := s.cache.Load(resourcePath)
+func (s *EMRService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
+    go s.fetchResourceList(*resourcePath)
+    x := s.cache.Load(*resourcePath)
     if x == nil {
         return &[]prompt.Suggest{}
     }
@@ -87,14 +87,14 @@ func (s *EMRService) GetResourceSuggestions(resourcePath string) *[]prompt.Sugge
     return &suggestions
 }
 
-func (s *EMRService) GetResourceDetails(resourcePath string, resourceName string) interface{} {
-    output := s.cache.Load(resourcePath)
+func (s *EMRService) GetResourceDetails(resourcePath *string, resourceName *string) interface{} {
+    output := s.cache.Load(*resourcePath)
     if output != nil { 
         clusters := *output.(*[]*emr.ClusterSummary)
         for _, clus := range clusters {
             clusterId := *clus.Id
             clusterNameId := fmt.Sprintf("%s(%s)", *clus.Name, *clus.Id)
-            if clusterNameId  == resourceName {
+            if clusterNameId  == *resourceName {
                 return s.client.DescribeCluster(&clusterId)
                 //return clus
             }

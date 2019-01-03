@@ -14,7 +14,7 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig/plugins"
+    "awsdig-plugins"
 )
 
 var Service IAMService = IAMService{ client: nil }
@@ -69,7 +69,7 @@ func (s *IAMService) IsResourcePath(path *string) bool {
     if _, ok := resourcePrefixSuggestionsMap[*path]; ok {
         return true
     }
-    suggestions := s.GetResourceSuggestions(*path)
+    suggestions := s.GetResourceSuggestions(path)
     if len(*suggestions) > 0 { return true }
     return false
 } 
@@ -151,18 +151,18 @@ func resourcesToSuggestions(resources interface{}) *[]prompt.Suggest{
     return &[]prompt.Suggest{}
 }
 
-func (s *IAMService) GetResourcePrefixSuggestions(resourcePrefixPath string) *[]prompt.Suggest {
-    suggestions := resourcePrefixSuggestionsMap[resourcePrefixPath]
+func (s *IAMService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
+    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
     return &suggestions
 }
 
-func (s *IAMService) GetResourceSuggestions(resourcePath string) *[]prompt.Suggest {
-    paths := strings.Split(resourcePath, "/")
+func (s *IAMService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
+    paths := strings.Split(*resourcePath, "/")
     realPath := fmt.Sprintf("/%s", path.Join(paths[0:2]...))
     go s.fetchResourceList(realPath)
-    x := s.cache.Load(resourcePath)
+    x := s.cache.Load(*resourcePath)
     if x == nil {
-        _, base := path.Split(filepath.Dir(resourcePath))
+        _, base := path.Split(filepath.Dir(*resourcePath))
         switch base {
             case "users":
                 return &userSuggestions
@@ -175,7 +175,7 @@ func (s *IAMService) GetResourceSuggestions(resourcePath string) *[]prompt.Sugge
         }
         return &[]prompt.Suggest{}
     }
-    _, base := path.Split(resourcePath)
+    _, base := path.Split(*resourcePath)
     switch base {
     case "users":
       users := x.(*[]*iam.User)
@@ -193,21 +193,21 @@ func (s *IAMService) GetResourceSuggestions(resourcePath string) *[]prompt.Sugge
     return &[]prompt.Suggest{}
 }
 
-func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string) interface{} {
-    output := s.cache.Load(resourcePath)
+func (s *IAMService) GetResourceDetails(resourcePath *string, resourceName *string) interface{} {
+    output := s.cache.Load(*resourcePath)
     if output != nil {
         switch output.(type) {
         case *[]*iam.User:
             for _, u := range *output.(*[]*iam.User) {
-                if resourceName == *u.UserName { return u }
+                if *resourceName == *u.UserName { return u }
             }
         case *[]*iam.Group:
             for _, g := range *output.(*[]*iam.Group) {
-                if resourceName == *g.GroupName { return g }
+                if *resourceName == *g.GroupName { return g }
             }
         case *[]*iam.Role:
             for _, r := range *output.(*[]*iam.Role) {
-                if resourceName == *r.RoleName { 
+                if *resourceName == *r.RoleName { 
                     policyDocument := plugins.UrlDecode(r.AssumeRolePolicyDocument)
                     r.AssumeRolePolicyDocument = policyDocument
                     return r 
@@ -215,19 +215,19 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
             }
         case *[]*iam.Policy:
             for _, p := range *output.(*[]*iam.Policy) {
-                if resourceName == *p.PolicyName { return p } 
+                if *resourceName == *p.PolicyName { return p } 
             }
         }
     } else {
-        dir := path.Dir(resourcePath) 
+        dir := path.Dir(*resourcePath) 
         output := s.cache.Load(dir)
         if output != nil {
-            _, base := path.Split(resourcePath)
+            _, base := path.Split(*resourcePath)
             switch output.(type) {
             case *[]*iam.User:
                 for _, u := range *output.(*[]*iam.User) {
                     if base == *u.UserName { 
-                        switch resourceName {
+                        switch *resourceName {
                         case "inline":
                             policyNames := s.client.ListUserPolicies(&base)
                             policies := make(map[string]map[string]interface{})
@@ -248,7 +248,7 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
             case *[]*iam.Group:
                 for _, g := range *output.(*[]*iam.Group) {
                     if base == *g.GroupName { 
-                        switch resourceName {
+                        switch *resourceName {
                         case "inline":
                             policyNames := s.client.ListGroupPolicies(&base)
                             policies := make(map[string]map[string]interface{})
@@ -267,7 +267,7 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
             case *[]*iam.Role:
                 for _, r := range *output.(*[]*iam.Role) {
                     if base == *r.RoleName { 
-                        switch resourceName {
+                        switch *resourceName {
                         case "inline":
                             policyNames := s.client.ListRolePolicies(&base)
                             policies := make(map[string]map[string]interface{})
@@ -286,7 +286,7 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
             case *[]*iam.Policy:
                 for _, p := range *output.(*[]*iam.Policy) {
                     if base == *p.PolicyName {
-                        switch resourceName {
+                        switch *resourceName {
                         case "document":
                             policyDocument := s.client.GetPolicyVersion(p.Arn, p.DefaultVersionId).Document
                             var policy map[string]interface{}

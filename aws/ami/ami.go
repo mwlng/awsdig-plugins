@@ -9,7 +9,7 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig/plugins"
+    "awsdig-plugins"
 )
 
 var Service AMIService = AMIService{ client: nil }
@@ -52,14 +52,14 @@ func (s *AMIService) fetchResourceList(path string) {
     return
 }
 
-func (s *AMIService) GetResourcePrefixSuggestions(resourcePrefixPath string) *[]prompt.Suggest {
-    suggestions := resourcePrefixSuggestionsMap[resourcePrefixPath]
+func (s *AMIService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
+    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
     return &suggestions
 }
 
-func (s *AMIService) GetResourceSuggestions(resourcePath string) *[]prompt.Suggest {
-    go s.fetchResourceList(resourcePath)
-    x := s.cache.Load(resourcePath)
+func (s *AMIService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
+    go s.fetchResourceList(*resourcePath)
+    x := s.cache.Load(*resourcePath)
     if x == nil {
         return &[]prompt.Suggest{}
     }
@@ -76,12 +76,12 @@ func (s *AMIService) GetResourceSuggestions(resourcePath string) *[]prompt.Sugge
     return &suggestions
 }
 
-func (s *AMIService) GetResourceDetails(resourcePath string, resourceName string) interface{} {
-    output := s.cache.Load(resourcePath)
+func (s *AMIService) GetResourceDetails(resourcePath *string, resourceName *string) interface{} {
+    output := s.cache.Load(*resourcePath)
     if output != nil {
         images := output.(*ec2.DescribeImagesOutput).Images
         for _, img := range images {
-            if *img.Name == resourceName {
+            if *img.Name == *resourceName {
                 return img
             }
         }
