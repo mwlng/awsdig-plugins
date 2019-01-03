@@ -29,7 +29,7 @@ Important: Changing codes in the top level directory may require to re-compile/r
 
 ## Plugin's interface
 
-You need to implement the below interface
+Below interface should be implemented in your plugin.
 
     type ServicePlugin interface {
          Initialize(sess *session.Session)
