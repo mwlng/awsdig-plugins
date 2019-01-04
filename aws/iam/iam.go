@@ -14,10 +14,8 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig-plugins"
+    "awsdig/plugins"
 )
-
-var Service IAMService = IAMService{ client: nil }
 
 var resourcePrefixSuggestions = []prompt.Suggest{
     {"users", "IAM users"},
@@ -58,6 +56,8 @@ type IAMService struct {
     client *clients.IAMClient
     cache *plugins.Cache
 }
+
+var PluginService IAMService
 
 func (s *IAMService) Initialize(sess *session.Session) {
     s.client = clients.NewClient("iam", sess).(*clients.IAMClient)

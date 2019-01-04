@@ -9,10 +9,9 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig-plugins"
+    "awsdig/plugins"
 )
 
-var Service AMIService = AMIService{ client: nil }
 
 var resourcePrefixSuggestions = []prompt.Suggest{}
 
@@ -24,6 +23,8 @@ type AMIService struct {
     client *clients.EC2Client
     cache *plugins.Cache
 }
+
+var PluginService AMIService
 
 func (s *AMIService) Initialize(sess *session.Session) {
     s.client = clients.NewClient("ec2", sess).(*clients.EC2Client)

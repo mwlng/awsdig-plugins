@@ -72,12 +72,12 @@ func (pm *PluginsManager) loadPlugins() {
             log.Fatal(err)
         }
         service := strings.ToLower(strings.Split(p, ".")[0])
-	plugin, err := plug.Lookup("Service")
+	plugin, err := plug.Lookup("PluginService")
 	if err != nil {
             log.Fatal(err)
 	}
-        pm.pluginsMap[service] = plugin.(ServicePlugin)
         plugin.(ServicePlugin).Initialize(pm.sess)
+        pm.pluginsMap[service] = plugin.(ServicePlugin)
     }
 }
 

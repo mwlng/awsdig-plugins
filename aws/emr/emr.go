@@ -10,10 +10,8 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig-plugins"
+    "awsdig/plugins"
 )
-
-var Service EMRService = EMRService{ client: nil }
 
 var resourcePrefixSuggestions = []prompt.Suggest{}
 
@@ -25,6 +23,8 @@ type EMRService struct {
     client *clients.EMRClient
     cache *plugins.Cache
 }
+
+var PluginService EMRService
 
 func (s *EMRService) Initialize(sess *session.Session) {
     s.client = clients.NewClient("emr", sess).(*clients.EMRClient)
