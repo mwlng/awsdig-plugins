@@ -30,12 +30,18 @@ func (s *EMRService) Initialize(sess *session.Session) {
     s.client = clients.NewClient("emr", sess).(*clients.EMRClient)
     s.cache = plugins.NewCache(10*time.Second)
 }
+
 func (s *EMRService) IsResourcePath(path *string) bool {
     if *path == "/" { return true }
     if _, ok := resourcePrefixSuggestionsMap[*path]; ok {
         return true
     }
     return false
+}
+
+func (s *EMRService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
+    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
+    return &suggestions
 }
 
 func (s *EMRService) listResourcesByPath(path string) *[]*emr.ClusterSummary {
@@ -61,11 +67,6 @@ func (s *EMRService) fetchResourceList(path string) {
     ret := s.listResourcesByPath(path)
     s.cache.Store(path, ret)
     return
-}
-
-func (s *EMRService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
-    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
-    return &suggestions
 }
 
 func (s *EMRService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {

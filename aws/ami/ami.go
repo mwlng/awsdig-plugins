@@ -38,6 +38,11 @@ func (s *AMIService) IsResourcePath(path *string) bool {
     return false
 }
 
+func (s *AMIService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
+    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
+    return &suggestions
+}
+
 func (s *AMIService) listResourcesByPath(path string) *ec2.DescribeImagesOutput {
     return s.client.ListAMIsByOwner("self")
 }
@@ -50,11 +55,6 @@ func (s *AMIService) fetchResourceList(path string) {
     ret := s.listResourcesByPath(path)
     s.cache.Store(path, ret)
     return
-}
-
-func (s *AMIService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[]prompt.Suggest {
-    suggestions := resourcePrefixSuggestionsMap[*resourcePrefixPath]
-    return &suggestions
 }
 
 func (s *AMIService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
