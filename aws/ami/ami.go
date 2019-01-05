@@ -9,7 +9,7 @@ import (
     "github.com/c-bata/go-prompt"
     "github.com/mwlng/aws-go-clients/clients"
 
-    "awsdig/plugins"
+    "github.com/mwlng/awsdig-plugins"
 )
 
 
