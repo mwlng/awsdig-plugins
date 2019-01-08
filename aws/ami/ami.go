@@ -1,6 +1,7 @@
 package main
 
 import (
+    "fmt"
     "time"
 
     "github.com/aws/aws-sdk-go/service/ec2"
@@ -71,7 +72,7 @@ func (s *AMIService) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
     suggestions := make([]prompt.Suggest, len(images))
     for i := range images {
         suggestions[i] = prompt.Suggest {
-            Text: *images[i].Name,
+            Text: fmt.Sprintf("%s(%s)", *images[i].Name, *images[i].ImageId),
         }
     }
     return &suggestions
@@ -82,7 +83,7 @@ func (s *AMIService) GetResourceDetails(resourcePath *string, resourceName *stri
     if output != nil {
         images := output.(*ec2.DescribeImagesOutput).Images
         for _, img := range images {
-            if *img.Name == *resourceName {
+            if *resourceName == fmt.Sprintf("%s(%s)", *img.Name, *img.ImageId) {
                 return img
             }
         }
