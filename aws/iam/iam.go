@@ -157,6 +157,10 @@ func (s *IAMService) GetResourcePrefixSuggestions(resourcePrefixPath *string) *[
 }
 
 func (s *IAMService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
+    if *resourcePath == "/" {
+        suggestions := resourcePrefixSuggestionsMap[*resourcePath]
+        return &suggestions
+    }
     paths := strings.Split(*resourcePath, "/")
     realPath := fmt.Sprintf("/%s", path.Join(paths[0:2]...))
     go s.fetchResourceList(realPath)
@@ -174,6 +178,21 @@ func (s *IAMService) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
                 return &policySuggestions
         }
         return &[]prompt.Suggest{}
+    } else {
+        count := 0
+        for {
+            if x == nil {
+                time.Sleep(100 * time.Millisecond)
+                x = s.cache.Load(*resourcePath)
+                count++
+                if count <= 10 {
+                    continue
+                } else {
+                   return &[]prompt.Suggest{}
+                }
+            }
+            break
+        }
     }
     _, base := path.Split(*resourcePath)
     switch base {

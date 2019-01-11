@@ -55,15 +55,28 @@ func (s *AMIService) fetchResourceList(path string) {
     }
     s.cache.UpdateLastFetchedAt(path)
     ret := s.listResourcesByPath(path)
-    s.cache.Store(path, ret)
+    if ret != nil {
+        s.cache.Store(path, ret)
+    }
     return
 }
 
 func (s *AMIService) GetResourceSuggestions(resourcePath *string) *[]prompt.Suggest {
     go s.fetchResourceList(*resourcePath)
     x := s.cache.Load(*resourcePath)
-    if x == nil {
-        return &[]prompt.Suggest{}
+    count := 0
+    for {
+        if x == nil {
+            time.Sleep(100 * time.Millisecond)
+            x = s.cache.Load(*resourcePath)
+            count++
+            if count <= 10 {
+                continue
+            } else {
+               return &[]prompt.Suggest{}
+            }
+        }
+        break
     }
     images := x.(*ec2.DescribeImagesOutput).Images
     if len(images) == 0 {
