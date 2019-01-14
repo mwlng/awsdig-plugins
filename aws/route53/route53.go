@@ -3,10 +3,8 @@ package main
 import (
     "fmt"
     "time"
-    //"strings"
+    "regexp"
     "path"
-    //"path/filepath"
-    //"encoding/json"
 
     "github.com/aws/aws-sdk-go/service/route53"
     "github.com/aws/aws-sdk-go/aws/session"
@@ -38,23 +36,53 @@ func (s *R53Service) Initialize(sess *session.Session) {
     s.cache = plugins.NewCache(10*time.Second)
 }
 
-func (s *R53Service) IsResourcePath(path *string) bool {
-    if *path == "/" { return true }
-    if _, ok := resourcePrefixSuggestionsMap[*path]; ok {
+func (s *R53Service) IsResourcePath(inputPath *string) bool {
+    if *inputPath == "/" { return true }
+    if _, ok := resourcePrefixSuggestionsMap[*inputPath]; ok {
         return true
     }
-    suggestions := s.GetResourceSuggestions(path)
-    if len(*suggestions) > 0 { return true }
+    r, _ := regexp.Compile("/geolocations/.*")
+    if r.MatchString(*inputPath) { return false }
+    if *inputPath == "/zones" || *inputPath == "/geolocations" {
+        s.GetResourceSuggestions(inputPath)
+        return true 
+    } else {
+        dir := path.Dir(*inputPath)
+        if dir == "/zones" { return true }
+    }
     return false
 } 
 
+func (s *R53Service) getHostedZoneIdByName(hostedZoneName *string, hostedZones *[]*route53.HostedZone) *string {
+    for _, z := range(*hostedZones) {
+        _, id := path.Split(*z.Id)
+        if fmt.Sprintf("%s(%s)", *z.Name, id)  == *hostedZoneName {
+            return z.Id
+        }
+    }
+    return nil
+}
+
 func (s *R53Service) listResourcesByPath(resourcePath string) interface{} {
+    dir := path.Dir(resourcePath)
     _, base := path.Split(resourcePath)
-    switch base {
-    case "zones":
-        return s.client.ListHostedZones()
-    case "geolocations":
-        return s.client.ListGeoLocations()
+    if dir == "/" {
+        switch base {
+        case "zones":
+            return s.client.ListHostedZones()
+        case "geolocations":
+            return s.client.ListGeoLocations()
+        }
+    } else {
+        _, parent := path.Split(dir)
+        x := s.cache.Load(dir)
+        switch parent {
+        case "zones":
+            id := s.getHostedZoneIdByName(&base, x.(*[]*route53.HostedZone))
+            if id != nil {
+                return s.client.ListResourceRecordSets(id)
+            }
+        }
     }
     return nil
 }
@@ -96,7 +124,10 @@ func resourcesToSuggestions(resources interface{}) *[]prompt.Suggest{
          if l != 0 {
              suggestions := make([]prompt.Suggest, l)
              for i, r := range *resources.(*[]*route53.HostedZone) {
-                 suggestions[i] = prompt.Suggest { Text: *r.Name, }
+                 _, id := path.Split(*r.Id)
+                 suggestions[i] = prompt.Suggest { 
+                     Text: fmt.Sprintf("%s(%s)", *r.Name, id),
+                 }
              }
              return &suggestions
          }
@@ -107,6 +138,16 @@ func resourcesToSuggestions(resources interface{}) *[]prompt.Suggest{
             for i, r := range *resources.(*[]*route53.GeoLocationDetails) {
                 name := extractGeoLocation(r)
                 suggestions[i] = prompt.Suggest { Text: *name, }
+            }
+            return &suggestions
+        }
+    case *[]*route53.ResourceRecordSet:
+        l := len(*resources.(*[]*route53.ResourceRecordSet))
+        if l != 0 {
+            suggestions := make([]prompt.Suggest, l)
+            for i, r := range *resources.(*[]*route53.ResourceRecordSet) {
+                name := fmt.Sprintf("%s(%s)", *r.Name, *r.Type)
+                suggestions[i] = prompt.Suggest { Text: name, }
             }
             return &suggestions
         }
@@ -142,14 +183,16 @@ func (s *R53Service) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
         } 
         break
     }
-    _, base := path.Split(*resourcePath)
-    switch base {
-    case "zones":
-      zones := x.(*[]*route53.HostedZone)
-      return resourcesToSuggestions(zones)
-    case "geolocations":
-      locations := x.(*[]*route53.GeoLocationDetails)
-      return resourcesToSuggestions(locations)
+    switch x.(type) {
+    case *[]*route53.HostedZone:
+        zones := x.(*[]*route53.HostedZone)
+        return resourcesToSuggestions(zones)
+    case *[]*route53.GeoLocationDetails:
+        locations := x.(*[]*route53.GeoLocationDetails)
+        return resourcesToSuggestions(locations)
+    case *[]*route53.ResourceRecordSet:
+        records := x.(*[]*route53.ResourceRecordSet)
+        return resourcesToSuggestions(records)
     }
     return &[]prompt.Suggest{}
 }
@@ -160,44 +203,19 @@ func (s *R53Service) GetResourceDetails(resourcePath *string, resourceName *stri
         switch output.(type) {
         case *[]*route53.HostedZone:
             for _, z := range *output.(*[]*route53.HostedZone) {
-                if *resourceName == *z.Name { return z }
+                _, id := path.Split(*z.Id)
+                if *resourceName == fmt.Sprintf("%s(%s)", *z.Name, id) { return z }
             }
         case *[]*route53.GeoLocationDetails:
             for _, g := range *output.(*[]*route53.GeoLocationDetails) {
                 if *resourceName == *extractGeoLocation(g) { return g }
             }
-        }
-    } 
-     /*else {
-        dir := path.Dir(*resourcePath) 
-        output := s.cache.Load(dir)
-        if output != nil {
-            _, base := path.Split(*resourcePath)
-            switch output.(type) {
-            case *[]*cloudformation.StackSummary:
-                for _, stack := range *output.(*[]*cloudformation.StackSummary) {
-                    if base == *stack.StackName { 
-                        switch *resourceName {
-                        case "template":
-                            return s.client.GetTemplate(&base)
-                        case "resources":
-                            return s.client.ListStackResources(&base)
-                        case "changesets":
-                            return s.client.ListChangeSets(&base)
-                        }
-                    }
-                }
-            case *[]*cloudformation.StackSetSummary:
-                for _, ss := range *output.(*[]*cloudformation.StackSetSummary) {
-                    if base == *ss.StackSetName { 
-                        switch *resourceName {
-                        case "instances":
-                            //return &instances
-                        }
-                    }
-                }
+        case *[]*route53.ResourceRecordSet:
+            for _, r := range *output.(*[]*route53.ResourceRecordSet) {
+                name := fmt.Sprintf("%s(%s)", *r.Name, *r.Type)
+                if *resourceName == name { return r }
             }
         }
-    } */
+    } 
     return nil    
 }
