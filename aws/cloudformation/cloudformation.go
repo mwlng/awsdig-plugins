@@ -50,13 +50,18 @@ func (s *CFNService) Initialize(sess *session.Session) {
     s.cache = plugins.NewCache(10*time.Second)
 }
 
-func (s *CFNService) IsResourcePath(path *string) bool {
-    if *path == "/" { return true }
-    if _, ok := resourcePrefixSuggestionsMap[*path]; ok {
+func (s *CFNService) IsResourcePath(inputPath *string) bool {
+    if *inputPath == "/" { return true }
+    if _, ok := resourcePrefixSuggestionsMap[*inputPath]; ok {
         return true
     }
-    suggestions := s.GetResourceSuggestions(path)
-    if len(*suggestions) > 0 { return true }
+    if *inputPath == "/stacks" || *inputPath == "/stacksets" {
+        s.GetResourceSuggestions(inputPath)
+        return true
+    } else {
+        dir := path.Dir(*inputPath)
+        if dir == "/stacks" || dir == "/stacksets" { return true }
+    }
     return false
 } 
 
@@ -135,9 +140,7 @@ func (s *CFNService) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
             case "stacksets":
                 return &stacksetSuggestions
         }
-        return &[]prompt.Suggest{}
-    } else {
-    count := 0
+        count := 0
         for {
             if x == nil {
                 time.Sleep(100 * time.Millisecond)

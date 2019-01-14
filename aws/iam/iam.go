@@ -64,13 +64,20 @@ func (s *IAMService) Initialize(sess *session.Session) {
     s.cache = plugins.NewCache(10*time.Second)
 }
 
-func (s *IAMService) IsResourcePath(path *string) bool {
-    if *path == "/" { return true }
-    if _, ok := resourcePrefixSuggestionsMap[*path]; ok {
+func (s *IAMService) IsResourcePath(inputPath *string) bool {
+    if *inputPath == "/" { return true }
+    if _, ok := resourcePrefixSuggestionsMap[*inputPath]; ok {
         return true
     }
-    suggestions := s.GetResourceSuggestions(path)
-    if len(*suggestions) > 0 { return true }
+    if *inputPath == "/users" || *inputPath == "/groups" ||
+       *inputPath == "/policies" || *inputPath == "/roles" {
+        s.GetResourceSuggestions(inputPath)
+        return true
+    } else {
+        dir := path.Dir(*inputPath)
+        if dir == "/users" || dir == "/groups" ||
+           dir == "/policies" || dir == "/roles" { return true }
+    }
     return false
 } 
 
@@ -177,8 +184,6 @@ func (s *IAMService) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
             case "policies":
                 return &policySuggestions
         }
-        return &[]prompt.Suggest{}
-    } else {
         count := 0
         for {
             if x == nil {

@@ -25,12 +25,12 @@ func NewCache(fetchInterval time.Duration) *Cache{
 func (c *Cache) ShouldFetch(key string) bool {
 	v, ok := c.lastFetchedAt.Load(key)
 	if !ok {
-		log.Printf("[WARN] Not found %s in lastFetchedAt\n", key)
-		return true
+            log.Printf("[WARN] Not found %s in lastFetchedAt\n", key)
+            return true
 	}
 	t, ok := v.(time.Time)
 	if !ok {
-		return true
+            return true
 	}
 	return time.Since(t) > c.fetchInterval
 }
