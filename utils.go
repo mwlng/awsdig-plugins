@@ -24,8 +24,8 @@ func UrlDecode(input *string) *string {
     return nil
 }
 
-func GetNameFromTags(tags *ec2.Tags) *string {
-    for _, tag := range tags {
+func GetNameFromTags(tags *[]*ec2.Tag) *string {
+    for _, tag := range *tags {
         if *tag.Key == "Name" {
             return tag.Value
         }
