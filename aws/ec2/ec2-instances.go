@@ -83,10 +83,10 @@ func (s *EC2Service) GetResourceSuggestions(resourcePath *string) *[]prompt.Sugg
     }
     suggestions := make([]prompt.Suggest, len(instances))
     for i := range instances {
-        instNameId := fmt.Sprintf("%s(%s)", *instances[i].InstanceId, *instances[i].PrivateIpAddress) 
-        name := GetNameFromTags(instances[i].Tags)
-        if name {
-            instNameId := fmt.Sprintf("%s(%s)", name, *instances[i].PrivateIpAddress)
+        instNameId := fmt.Sprintf("%s(%s)", *instances[i].InstanceId, *instances[i].PrivateDnsName) 
+        name := plugins.GetNameFromTags(&instances[i].Tags)
+        if name != nil {
+            instNameId = fmt.Sprintf("%s(%s)", *name, *instances[i].PrivateDnsName)
         }
         suggestions[i] = prompt.Suggest {
             Text: instNameId,
@@ -100,10 +100,10 @@ func (s *EC2Service) GetResourceDetails(resourcePath *string, resourceName *stri
     if output != nil { 
         instances := *output.(*[]*ec2.Instance)
         for _, i := range instances {
-            instNameId := fmt.Sprintf("%s(%s)", *i.InstanceId, *i.PrivateIpAddress)
-            name := GetNameFromTags(i.Tags)
-            if name {
-                instNameId = fmt.Sprintf("%s(%s)", name, *i.PrivateIpAddress)
+            instNameId := fmt.Sprintf("%s(%s)", *i.InstanceId, *i.PrivateDnsName)
+            name := plugins.GetNameFromTags(&i.Tags)
+            if name != nil {
+                instNameId = fmt.Sprintf("%s(%s)", *name, *i.PrivateDnsName)
             }
             if instNameId  == *resourceName {
                 return i
