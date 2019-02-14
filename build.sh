@@ -15,3 +15,4 @@ go build -buildmode=$MODE -ldflags="-s -w" -o ./build/$GOOS/$GOARCH/plugins/aws/
 go build -buildmode=$MODE -ldflags="-s -w" -o ./build/$GOOS/$GOARCH/plugins/aws/route53.plugin ./aws/route53/route53.go 
 go build -buildmode=$MODE -ldflags="-s -w" -o ./build/$GOOS/$GOARCH/plugins/aws/autoscaling.plugin ./aws/asg/autoscaling.go 
 go build -buildmode=$MODE -ldflags="-s -w" -o ./build/$GOOS/$GOARCH/plugins/aws/ecs.plugin ./aws/ecs/ecs.go 
+go build -buildmode=$MODE -ldflags="-s -w" -o ./build/$GOOS/$GOARCH/plugins/aws/glue.plugin ./aws/glue/glue.go
