@@ -41,7 +41,7 @@ func PathToStrings(inputPath *string) *[]string {
     for i, s := range(rawStrings) {
         l := len(s)
         if l > 0 && s[l-1] == "\" {
-            str += s
+            str = strings.Join(str, s)
         } else {
             resultStrings = append(resultStrings, str)
             str = ""            
