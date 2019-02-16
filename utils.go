@@ -1,6 +1,7 @@
 package plugins
 
 import (
+    "strings"
     "net/url"
 
     "github.com/aws/aws-sdk-go/service/ec2"
@@ -31,4 +32,20 @@ func GetNameFromTags(tags *[]*ec2.Tag) *string {
         }
     }
     return nil
+}
+
+func PathToStrings(inputPath *string) *[]string {
+    rawStrings := strings.Split(inputPath)
+    str := ""
+    resultStrings := []string{}
+    for i, s := range(rawStrings) {
+        l := len(s)
+        if l > 0 && s[l-1] == "\" {
+            str += s
+        } else {
+            resultStrings = append(resultStrings, str)
+            str = ""            
+        }
+    }
+    return &resultStrings
 }
