@@ -35,16 +35,22 @@ func GetNameFromTags(tags *[]*ec2.Tag) *string {
 }
 
 func PathToStrings(inputPath *string) *[]string {
-    rawStrings := strings.Split(inputPath)
+    rawStrings := strings.Split(*inputPath, "/")
     str := ""
     resultStrings := []string{}
     for i, s := range(rawStrings) {
         l := len(s)
-        if l > 0 && s[l-1] == "\" {
-            str = strings.Join(str, s)
-        } else {
+        if l > 0 && s[l-1] == '\\' {
+            if len(str) == 0 {
+                str = fmt.Sprintf("%s/%s", s, rawStrings[i+1])
+            } else {
+                str = fmt.Sprintf("%s/%s", str, rawStrings[i+1])
+            }
+        } else if len(str) > 0 {
             resultStrings = append(resultStrings, str)
-            str = ""            
+            str = ""
+        } else {
+            resultStrings = append(resultStrings, s)
         }
     }
     return &resultStrings
