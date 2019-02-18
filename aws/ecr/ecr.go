@@ -38,22 +38,36 @@ func (s *ECRService) IsResourcePath(inputPath *string) bool {
     if _, ok := resourcePrefixSuggestionsMap[*inputPath]; ok {
         return true
     } else {
-        dir := path.Dir(*inputPath)
-        if dir == "/" {
-            return true
-        } 
+        strs := plugins.PathToStrings(inputPath)
+        l := len(*strs)
+        prefixPath := fmt.Sprintf("/%s", path.Join((*strs)[:l-1]...))
+        base := (*strs)[l-1]
+        x := s.cache.Load(prefixPath)
+        if prefixPath == "/" {
+            for _, r := range *x.(*[]*ecr.Repository) {
+                if base == strings.Replace(*r.RepositoryName, "/", "\\/", -1) {
+                    return true
+                }
+            }
+        } else {
+            switch x.(type) {
+                case *[]*ecr.Repository:
+                    return true
+            }
+        }
     }
     return false
 } 
 
 func (s *ECRService) listResourcesByPath(resourcePath string) interface{} {
-    dir := path.Dir(resourcePath)
-    _, base := path.Split(resourcePath)
-    if dir == "/" {
+    if resourcePath  == "/" {
         return s.client.ListRepositories()
     } else {
-       repoName := strings.Replace(base, "\\/", "/", -1)
-       return s.client.ListImageIdsByRepository(&repoName)
+        // _, base := path.Split(resourcePath)
+        strs := plugins.PathToStrings(&resourcePath)
+        base := (*strs)[len(*strs)-1]
+        repoName := strings.Replace(base, "\\/", "/", -1)
+        return s.client.ListImageIdsByRepository(&repoName)
     }
     return nil
 }
@@ -88,8 +102,14 @@ func resourcesToSuggestions(resources interface{}) *[]prompt.Suggest{
         if l != 0 {
             suggestions := make([]prompt.Suggest, l)
             for i, r := range *resources.(*[]*ecr.ImageIdentifier) {
-                suggestions[i] = prompt.Suggest {
-                    Text: *r.ImageTag,
+                if r.ImageTag !=nil && len(*r.ImageTag) > 0  {
+                    suggestions[i] = prompt.Suggest {
+                        Text: *r.ImageTag,
+                    }
+                } else {
+                    suggestions[i] = prompt.Suggest {
+                        Text: *r.ImageDigest,
+                    }
                 }
             }
             return &suggestions
@@ -145,13 +165,18 @@ func (s *ECRService) GetResourceDetails(resourcePath *string, resourceName *stri
         switch output.(type) {
         case *[]*ecr.Repository:
             for _, r := range *output.(*[]*ecr.Repository) {
-                fmt.Println(*resourceName)
                 if *resourceName == strings.Replace(*r.RepositoryName, "/", "\\/", -1) { return r }
             }
         case *[]*ecr.ImageIdentifier:
             for _, i := range *output.(*[]*ecr.ImageIdentifier) {
-                if *resourceName == *i.ImageTag {
-                    return s.client.DescribeImageById(i)   
+                if i.ImageTag !=nil && len(*i.ImageTag) > 0 && *resourceName == *i.ImageTag {
+                    strs :=  plugins.PathToStrings(resourcePath)
+                    repoName := strings.Replace((*strs)[len(*strs)-1], "\\/", "/", -1)
+                    return s.client.DescribeImageById(&repoName, i)   
+                } else if *resourceName == *i.ImageDigest {
+                    strs :=  plugins.PathToStrings(resourcePath)
+                    repoName := strings.Replace((*strs)[len(*strs)-1], "\\/", "/", -1)
+                    return s.client.DescribeImageById(&repoName, i)   
                 }
             }
         }
