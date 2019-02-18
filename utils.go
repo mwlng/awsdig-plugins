@@ -39,13 +39,22 @@ func PathToStrings(inputPath *string) *[]string {
     rawStrings := strings.Split(*inputPath, "/")
     str := ""
     resultStrings := []string{}
+    total := len(rawStrings)
     for i, s := range(rawStrings) {
         l := len(s)
         if l > 0 && s[l-1] == '\\' {
-            if len(str) == 0 {
-                str = fmt.Sprintf("%s/%s", s, rawStrings[i+1])
+            if i+1 < total {
+                if len(str) == 0 {
+                    str = fmt.Sprintf("%s/%s", s, rawStrings[i+1])
+                } else {
+                   str = fmt.Sprintf("%s/%s", str, rawStrings[i+1])
+                }
             } else {
-                str = fmt.Sprintf("%s/%s", str, rawStrings[i+1])
+               if len(str) == 0 {
+                   resultStrings = append(resultStrings, s)
+               } else {
+                   resultStrings = append(resultStrings, str)
+               }
             }
         } else if len(str) > 0 {
             resultStrings = append(resultStrings, str)
@@ -56,3 +65,5 @@ func PathToStrings(inputPath *string) *[]string {
     }
     return &resultStrings
 }
+
+
