@@ -36,8 +36,8 @@ Below interface should be implemented in your plugin.
 
     type Plugin interface {
          Initialize(sess *session.Session)
-         IsResourcePath(path *string) bool
-         GetResourcePrefixSuggestions(resourcePrefixPath *string) []prompt.Suggest
-         GetResourceSuggestions(resourcePath *string) []prompt.Suggest
-         GetResourceDetails(resourcePath *string, resourceName *string) interface{}
+         IsResourcePath(path string) bool
+         GetResourcePrefixSuggestions(resourcePrefixPath string) []prompt.Suggest
+         GetResourceSuggestions(resourcePath string) []prompt.Suggest
+         GetResourceDetails(resourcePath string, resourceName string) interface{}
     }
