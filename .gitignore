@@ -2,5 +2,7 @@
 # Git ignore 
 #
 
+**/.DS_Store
+
 vendor/*
 build/*
