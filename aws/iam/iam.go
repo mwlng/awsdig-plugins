@@ -266,10 +266,10 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
 							for _, p := range policyNames {
 								var policy map[string]interface{}
 								policyDocument := s.client.GetUserPolicy(&base, p)
-								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), policies[*p])
+								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), &policy)
 								policies[*p] = policy
 							}
-							return &policies
+							return policies
 						case "policies":
 							return s.client.ListAttachedUserPolicies(&base)
 						case "groups":
@@ -287,10 +287,10 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
 							for _, p := range policyNames {
 								var policy map[string]interface{}
 								policyDocument := s.client.GetGroupPolicy(&base, p)
-								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), policy)
+								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), &policy)
 								policies[*p] = policy
 							}
-							return &policies
+							return policies
 						case "policies":
 							return s.client.ListAttachedGroupPolicies(&base)
 						}
@@ -306,10 +306,10 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
 							for _, p := range policyNames {
 								var policy map[string]interface{}
 								policyDocument := s.client.GetRolePolicy(&base, p)
-								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), policy)
+								json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), &policy)
 								policies[*p] = policy
 							}
-							return &policies
+							return policies
 						case "policies":
 							return s.client.ListAttachedRolePolicies(&base)
 						}
@@ -322,8 +322,8 @@ func (s *IAMService) GetResourceDetails(resourcePath string, resourceName string
 						case "document":
 							policyDocument := s.client.GetPolicyVersion(p.Arn, p.DefaultVersionId).Document
 							var policy map[string]interface{}
-							json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), policy)
-							return &policy
+							json.Unmarshal([]byte(utils.UrlDecode(*policyDocument)), &policy)
+							return policy
 						}
 					}
 				}

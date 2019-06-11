@@ -18,10 +18,8 @@ func ExtractSuggestionsText(suggestions []prompt.Suggest) []string {
 }
 
 func UrlDecode(input string) string {
-	if values, err := url.ParseQuery(input); err == nil {
-		for key := range values {
-			return key
-		}
+	if value, err := url.QueryUnescape(input); err == nil {
+		return value
 	}
 	return ""
 }
